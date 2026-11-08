@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "MeetingDocument": {
+      "title": "MeetingDocument",
+      "description": "Server-authoritative meeting state and intake record for The 14th Step.",
+      "type": "object",
+      "properties": {
+        "meetingId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Unique identifier for the meeting room."
+        },
+        "ownerUserId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Private owner user ID enforcing strict access isolation."
+        },
+        "userName": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Visitor first name from minimal intake."
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 240,
+          "description": "Current recovery meeting topic."
+        },
+        "currentPhase": {
+          "type": "string",
+          "enum": [
+            "PRE_MEETING_CHATTER",
+            "OPENING",
+            "TOPIC_INTRO",
+            "OPEN_SHARING",
+            "CRISIS_MODE",
+            "CLOSING",
+            "POST_MEETING_FELLOWSHIP"
+          ],
+          "maxLength": 40
+        },
+        "userHandRaised": {
+          "type": "boolean"
+        },
+        "activeCrisisFlag": {
+          "type": "boolean"
+        },
+        "beatsInCurrentPhase": {
+          "type": "number"
+        },
+        "isAutonomousLoopRunning": {
+          "type": "boolean"
+        },
+        "deterministicSeed": {
+          "type": "number"
+        },
+        "lastUpdatedTimestamp": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "meetingId",
+        "ownerUserId",
+        "topic",
+        "currentPhase",
+        "userHandRaised",
+        "activeCrisisFlag",
+        "beatsInCurrentPhase",
+        "isAutonomousLoopRunning",
+        "deterministicSeed",
+        "lastUpdatedTimestamp"
+      ]
+    }
+  },
+  "firestore": {
+    "/meetings/{meetingId}": {
+      "schema": "MeetingDocument",
+      "description": "Stores private autonomous recovery meeting rooms owned by ownerUserId."
+    }
+  }
+}

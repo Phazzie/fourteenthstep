@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Safety Net (Default-Deny Catch-All)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidMeetingDocument(data) {
+      return data.keys().hasAll([
+          'meetingId',
+          'ownerUserId',
+          'topic',
+          'currentPhase',
+          'userHandRaised',
+          'activeCrisisFlag',
+          'beatsInCurrentPhase',
+          'isAutonomousLoopRunning',
+          'deterministicSeed',
+          'lastUpdatedTimestamp'
+        ])
+        && data.keys().hasOnly([
+          'meetingId',
+          'ownerUserId',
+          'userName',
+          'topic',
+          'currentPhase',
+          'roster',
+          'transcript',
+          'userHandRaised',
+          'activeCrisisFlag',
+          'beatsInCurrentPhase',
+          'isAutonomousLoopRunning',
+          'deterministicSeed',
+          'lastUpdatedTimestamp'
+        ])
+        && isValidId(data.meetingId)
+        && isValidId(data.ownerUserId)
+        && data.ownerUserId == request.auth.uid
+        && (!('userName' in data) || (data.userName is string && data.userName.size() <= 64))
+        && data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 240
+        && data.currentPhase is string && data.currentPhase.size() <= 40
+        && data.userHandRaised is bool
+        && data.activeCrisisFlag is bool
+        && data.beatsInCurrentPhase is int
+        && data.isAutonomousLoopRunning is bool
+        && data.deterministicSeed is int
+        && data.lastUpdatedTimestamp is int;
+    }
+
+    match /meetings/{meetingId} {
+      allow get: if isSignedIn() && isValidId(meetingId) && existing().ownerUserId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUserId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(meetingId) && isValidMeetingDocument(incoming()) && incoming().meetingId == meetingId;
+      allow update: if isSignedIn()
+        && isValidId(meetingId)
+        && isValidMeetingDocument(incoming())
+        && existing().ownerUserId == request.auth.uid
+        && incoming().ownerUserId == existing().ownerUserId
+        && incoming().meetingId == existing().meetingId
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'currentPhase',
+          'transcript',
+          'userHandRaised',
+          'activeCrisisFlag',
+          'beatsInCurrentPhase',
+          'isAutonomousLoopRunning',
+          'lastUpdatedTimestamp'
+        ]);
+      allow delete: if false;
+    }
+  }
+}

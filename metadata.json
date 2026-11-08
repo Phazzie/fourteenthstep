@@ -1,0 +1,6 @@
+{
+  "name": "The 14th Step",
+  "description": "An autonomous, server-authoritative recovery fellowship meeting simulator built on a strict Hexagonal (Ports & Adapters) architecture.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
